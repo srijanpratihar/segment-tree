@@ -1,33 +1,35 @@
-vector<int>seg;
-SGTree(int n)
-{
- sg.resize(4*n+1);   
-}
-{
-    void build(int ind,int low,int high,int arr[])
-{
-    if(low==high)
+class NumArray {
+public:
+    vector<int>arr;
+    vector<int>seg;
+    void build(int ind,int low,int high,vector<int>&seg,vector<int>&arr)
     {
-        seg[ind]=arr[low];
-        return;
+        if(low==high)
+        {
+            seg[ind]=arr[low];
+            return;
+        }
+        int mid=(low+high)/2;
+        build(2*ind+1,low,mid,seg,arr);
+        build(2*ind+2,mid+1,high,seg,arr);
+        seg[ind]=seg[2*ind+1]+seg[2*ind+2];
     }
-    int mid=(low+high)/2;
-    build(2*ind+1,low,mid,arr);
-    build(2*ind+2,mid+1,high,arr);
-    seg[ind]=min(seg[2*ind+1],seg[2*ind+2]);
-}
-int query(int ind,int low,int high,int l,int r)
-{
-    if(r<low||high<l)
-    return INT_MAX;
-    if(low>=l&&high<=r)
-    return seg[ind];
-    int mid=(low+high)/2;
-    int left=query(2*ind+1,low,mid,l,r);
-    int right=query(2*ind+2,mid+1,high,l,r);
-    return min(left,right);
-}
-void update(int ind,int low,int high,int i,int val)
+    int query(int ind,int l,int r,int low,int high,vector<int>&seg,vector<int>&arr)
+    {
+        if(low>=l&&high<=r)
+        {
+            return seg[ind];
+        }
+        if(low>r||high<l)
+            return 0;
+        int mid=(low+high)/2;
+        int left=query(2*ind+1,l,r,low,mid,seg,arr);
+        int right=query(2*ind+2,l,r,mid+1,high,seg,arr);
+        
+        return left+right;
+        
+    }
+    void updates(int ind,int low,int high,int i,int val,vector<int>&seg)
 {
     if(low==high)
     {
@@ -37,12 +39,37 @@ void update(int ind,int low,int high,int i,int val)
     int mid=(low+high)/2;
     if(i<=mid)
     {
-        update(2*ind+1,low,mid,i,val);
+        updates(2*ind+1,low,mid,i,val,seg);
     }
     else
-    update(2*ind+2,low,i,val,seg);
-    seg[ind]=min(seg[2*ind+1],seg[2*ind+2]);
+    updates(2*ind+2,mid+1,high,i,val,seg);
+    seg[ind]=seg[2*ind+1]+seg[2*ind+2];
     return;
     
 }
-}
+    NumArray(vector<int>& nums) {
+        int n=nums.size();
+        vector<int>s(4*n,0);
+        seg=s;
+        arr=nums;
+        build(0,0,n-1,seg,arr);
+
+    }
+    
+    void update(int index, int val) {
+     updates(0,0,arr.size()-1,index,val,seg);  
+        arr[index]=val;
+    }
+    
+    int sumRange(int left, int right) {
+        int n=arr.size();             
+        return query(0,left,right,0,n-1,seg,arr);
+    }
+};
+
+/**
+ * Your NumArray object will be instantiated and called as such:
+ * NumArray* obj = new NumArray(nums);
+ * obj->update(index,val);
+ * int param_2 = obj->sumRange(left,right);
+ */
